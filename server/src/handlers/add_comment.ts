@@ -1,14 +1,33 @@
+import { db } from '../db';
+import { reportCommentsTable, reportsTable } from '../db/schema';
 import { type AddCommentInput, type ReportComment } from '../schema';
+import { eq } from 'drizzle-orm';
 
 export async function addComment(input: AddCommentInput, userId: number): Promise<ReportComment> {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is to add a comment to a report.
-    // Should verify that user has access to the report.
-    return Promise.resolve({
-        id: 0, // Placeholder ID
+  try {
+    // First verify that the report exists
+    const existingReport = await db.select()
+      .from(reportsTable)
+      .where(eq(reportsTable.id, input.report_id))
+      .execute();
+
+    if (existingReport.length === 0) {
+      throw new Error('Report not found');
+    }
+
+    // Insert the comment
+    const result = await db.insert(reportCommentsTable)
+      .values({
         report_id: input.report_id,
         user_id: userId,
-        comment: input.comment,
-        created_at: new Date()
-    } as ReportComment);
+        comment: input.comment
+      })
+      .returning()
+      .execute();
+
+    return result[0];
+  } catch (error) {
+    console.error('Comment creation failed:', error);
+    throw error;
+  }
 }

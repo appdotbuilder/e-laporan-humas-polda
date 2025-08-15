@@ -1,8 +1,19 @@
+import { db } from '../db';
+import { usersTable } from '../db/schema';
 import { type User } from '../schema';
+import { asc } from 'drizzle-orm';
 
-export async function getUsers(): Promise<User[]> {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is to fetch all users from the database.
-    // This should be restricted to PIMPINAN/ADMIN roles only.
-    return Promise.resolve([]);
-}
+export const getUsers = async (): Promise<User[]> => {
+  try {
+    // Fetch all users ordered by username for consistent results
+    const result = await db.select()
+      .from(usersTable)
+      .orderBy(asc(usersTable.username))
+      .execute();
+
+    return result;
+  } catch (error) {
+    console.error('Get users failed:', error);
+    throw error;
+  }
+};
